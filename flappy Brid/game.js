@@ -9,6 +9,29 @@ let frames = 0;
 const sprite = new Image();
 sprite.src = "img/sprite.png";
 
+//GAME STATE
+const state =  {
+    current : 0,
+    getReady : 0,
+    game : 1,
+    over : 2
+}
+
+//CONTROL THE GAME
+cvs.addEventListener("click", function(evt){
+    switch(state.current){
+        case state.getReady : 
+            state.current = state.game;
+            break;
+        case state.game :
+            bird.flap();
+            break;
+        case state.over :
+            state.current = state.getReady;
+            break;
+    }
+});
+
 //BACKGROUND
 const bg = {
     sX : 0,
@@ -55,9 +78,41 @@ const bird = {
 
     frame : 0,
 
+    gravity : 0.25,
+    jump: 4.6,
+    speed : 0,
+
+
     draw : function(){
         let bird = this.animation[this.frame];
         ctx.drawImage(sprite, bird.sX, bird.sY, this.w, this.h, this.x - this.w/2, this.y-this.h/2, this.w, this.h);
+    },
+
+    flap : function(){
+        this.speed = - this.jump; //마우스 클릭시 점점 높이 올라감.
+    },
+
+    update : function(){
+        //IF THE GAME STATE IS GET READY STATE, THE BIRD MUST FLAP SLOWLY
+        this.period = state.current == state.getReady ? 10:5;
+        //WE INCREMENT THE FRAME BY 1, EACH PERIOD
+        this.frame += frames%this.period == 0 ? 1:0;
+        //FRAME GOES FROM 0 TO 4, THEN AGAIN TO 0
+        this.frame = this.frame%this.animation.length;
+
+        if(state.current == state.getReady){
+            this.y = 150; //RESET POSITION OF THE BIRD AFTER CAME OVER
+        } else {
+            this.speed += this.gravity;
+            this.y += this.speed;
+
+            if(this.y + this.h/2 >= cvs.height - fg.h){
+                this.y = cvs.height - fg.h - this.h/2;
+                if(state.current == state.game){
+                    state.current = state.over;
+                }
+            }
+        }
     }
 }
 
@@ -71,7 +126,9 @@ const gameOver = {
     y: 90,
 
     draw : function() {
-        ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x, this.y, this.w, this.h);
+        if(state.current == state.over){
+            ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x, this.y, this.w, this.h);
+        }
     }
 }
 
@@ -85,7 +142,9 @@ const getReady = {
     y: 80,
 
     draw : function() {
-        ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x, this.y, this.w, this.h);
+        if(state.current == state.getReady) {
+            ctx.drawImage(sprite, this.sX, this.sY, this.w, this.h, this.x, this.y, this.w, this.h);
+        }
     }
 }
 
@@ -104,7 +163,7 @@ function draw(){
 
 //UPDATE
 function update(){
-
+    bird.update();
 }
 
 //LOOP
